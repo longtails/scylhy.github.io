@@ -14,28 +14,52 @@
   </url>
   
   <url>
-    <loc>https://scylhy.github.io/post/</loc>
-    <lastmod>2019-05-24T20:48:00+08:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://scylhy.github.io/post/test/</loc>
-    <lastmod>2019-05-24T20:48:00+08:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://scylhy.github.io/about/</loc>
     <lastmod>2019-05-24T20:45:01+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://scylhy.github.io/post/about/</loc>
-    <lastmod>2019-05-24T20:45:01+08:00</lastmod>
+    <loc>https://scylhy.github.io/k8s/persistentvoumes/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://scylhy.github.io/k8s/statefulset/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://scylhy.github.io/k8s/fabric.kafka/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://scylhy.github.io/k8s/ibm-kubernetes%E5%BE%AE%E8%AE%B2%E5%A0%82/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://scylhy.github.io/k8s/k8s1.14.2/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://scylhy.github.io/k8s/kfk-zk1/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://scylhy.github.io/k8s/kfk-zk2/</loc>
+    <priority>0</priority>
   </url>
   
   <url>
     <loc>https://scylhy.github.io/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://scylhy.github.io/k8s/</loc>
     <priority>0</priority>
   </url>
   

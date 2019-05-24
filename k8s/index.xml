@@ -1,33 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>My New Hugo Site</title>
-    <link>https://scylhy.github.io/</link>
-    <description>Recent content on My New Hugo Site</description>
+    <title>K8s on My New Hugo Site</title>
+    <link>https://scylhy.github.io/k8s/</link>
+    <description>Recent content in K8s on My New Hugo Site</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 24 May 2019 21:07:40 +0800</lastBuildDate>
     
-	<atom:link href="https://scylhy.github.io/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://scylhy.github.io/k8s/index.xml" rel="self" type="application/rss+xml" />
     
-    
-    <item>
-      <title>Secod</title>
-      <link>https://scylhy.github.io/secod/</link>
-      <pubDate>Fri, 24 May 2019 21:07:40 +0800</pubDate>
-      
-      <guid>https://scylhy.github.io/secod/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>About</title>
-      <link>https://scylhy.github.io/about/</link>
-      <pubDate>Fri, 24 May 2019 20:45:01 +0800</pubDate>
-      
-      <guid>https://scylhy.github.io/about/</guid>
-      <description> welcome </description>
-    </item>
     
     <item>
       <title></title>

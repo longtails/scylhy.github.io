@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title> // My New Hugo Site</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.56.0-DEV" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="John Doe" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="https://scylhy.github.io/css/main.min.f90f5edd436ec7b74ad05479a05705770306911f721193e7845948fb07fe1335.css" />
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="在k8s上搭建kfk-zk集群(1) kfk/zk属于有状态的应用，所以应当用StatefulSet来部署应用，但StatefulSet要比无状态的Deployment要复杂，主要表现在增加了：
+ stable stroage，并且需要用StorageClass、PV 有状态应用的网络问题，需要Headless Service,并且每个pod是有序编号的，其DNS就是name-1.headlessService  这里，我们采用官方部署zk的教程,该教程有个前提（新手一般想打它） &gt; This tutorial assumes that you have configured your cluster to dynamically provision PersistentVolumes. If your cluster is not configured to do so, you will have to manually provision three 20 GiB volumes before starting this tutorial.
+这就给我们带来了一点麻烦,主要是创建PV以及如何让StatefulSet能够绑定我们创建的PV。那么，我们的工作就是创建PV，以及如何让StatefulSet绑定它们。
+StatefulSet使用spec.volumeClaimTemplates为其pod创建PVC以此绑定PV。回想，之前PVC通过name的方式手动绑定到PV，但，这里肯定不行的，一个StatefulSet管理多个Pod,每个Pod都以自己的PVC,如果通过名字，那它们都会去找同一个PV,一个PV只能有一个PVC绑定，其他PVC就会处于pendding状态；这时，我们再看官方StatefulSets页的demo，会发现有个storageClassName，在Stable Storage下也说明了，StatefulSet创建的PVC是通过storageClassName的方式找到PV的，回到官方部署zk的教程，demo中storageNameClassName是缺失的，即，使用的是默认的StorageClass。
+ If no StorageClass is specified, then the default StorageClass will be used
+ 至此，理解了k8s使用storageClass绑定pvc/pv的设计，也知道在statefulSet中如何使用，但，我们实验要简单，查阅资料storageClass大多是云厂商provisioner,可实验的是NFS和local，当然local更简单，但有个支持版本问题。 &gt; FEATURE STATE: Kubernetes v1.14 实验使用的是1."/>
+
+    <meta property="og:title" content="" />
+<meta property="og:description" content="在k8s上搭建kfk-zk集群(1) kfk/zk属于有状态的应用，所以应当用StatefulSet来部署应用，但StatefulSet要比无状态的Deployment要复杂，主要表现在增加了：
+ stable stroage，并且需要用StorageClass、PV 有状态应用的网络问题，需要Headless Service,并且每个pod是有序编号的，其DNS就是name-1.headlessService  这里，我们采用官方部署zk的教程,该教程有个前提（新手一般想打它） &gt; This tutorial assumes that you have configured your cluster to dynamically provision PersistentVolumes. If your cluster is not configured to do so, you will have to manually provision three 20 GiB volumes before starting this tutorial.
+这就给我们带来了一点麻烦,主要是创建PV以及如何让StatefulSet能够绑定我们创建的PV。那么，我们的工作就是创建PV，以及如何让StatefulSet绑定它们。
+StatefulSet使用spec.volumeClaimTemplates为其pod创建PVC以此绑定PV。回想，之前PVC通过name的方式手动绑定到PV，但，这里肯定不行的，一个StatefulSet管理多个Pod,每个Pod都以自己的PVC,如果通过名字，那它们都会去找同一个PV,一个PV只能有一个PVC绑定，其他PVC就会处于pendding状态；这时，我们再看官方StatefulSets页的demo，会发现有个storageClassName，在Stable Storage下也说明了，StatefulSet创建的PVC是通过storageClassName的方式找到PV的，回到官方部署zk的教程，demo中storageNameClassName是缺失的，即，使用的是默认的StorageClass。
+ If no StorageClass is specified, then the default StorageClass will be used
+ 至此，理解了k8s使用storageClass绑定pvc/pv的设计，也知道在statefulSet中如何使用，但，我们实验要简单，查阅资料storageClass大多是云厂商provisioner,可实验的是NFS和local，当然local更简单，但有个支持版本问题。 &gt; FEATURE STATE: Kubernetes v1.14 实验使用的是1." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://scylhy.github.io/k8s/kfk-zk1/" />
+
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://scylhy.github.io"><img class="app-header-avatar" src="/avatar.jpg" alt="John Doe" /></a>
+      <h1>My New Hugo Site</h1>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vehicula turpis sit amet elit pretium.</p>
+      <div class="app-header-social">
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title"></h1>
+      <div class="post-meta">
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Jan 1, 0001
+        </div>
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          3 min read
+        </div></div>
+    </header>
+    <div class="post-content">
+      
+
+<h3 id="在k8s上搭建kfk-zk集群-1">在k8s上搭建kfk-zk集群(1)</h3>
+
+<p>kfk/zk属于有状态的应用，所以应当用StatefulSet来部署应用，但StatefulSet要比无状态的Deployment要复杂，主要表现在增加了：</p>
+
+<ol>
+<li>stable stroage，并且需要用StorageClass、PV</li>
+<li>有状态应用的网络问题，需要Headless Service,并且每个pod是有序编号的，其DNS就是name-1.headlessService</li>
+</ol>
+
+<p>这里，我们采用<a href="https://kubernetes.io/zh/docs/tutorials/stateful-application/zookeeper/">官方部署zk的教程</a>,该教程有个前提（新手一般想打它）
+&gt; This tutorial assumes that you have configured your cluster to dynamically provision PersistentVolumes. If your cluster is not configured to do so, you will have to manually provision three 20 GiB volumes before starting this tutorial.</p>
+
+<p>这就给我们带来了一点麻烦,主要是创建PV以及如何让StatefulSet能够绑定我们创建的PV。那么，我们的工作就是创建PV，以及如何让StatefulSet绑定它们。</p>
+
+<p>StatefulSet使用spec.volumeClaimTemplates为其pod创建PVC以此绑定PV。回想，之前PVC通过name的方式手动绑定到PV，但，这里肯定不行的，一个StatefulSet管理多个Pod,每个Pod都以自己的PVC,如果通过名字，那它们都会去找同一个PV,一个PV只能有一个PVC绑定，其他PVC就会处于pendding状态；这时，我们再看官方<a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSets</a>页的demo，会发现有个storageClassName，在Stable Storage下也说明了，StatefulSet创建的PVC是通过storageClassName的方式找到PV的，回到官方部署zk的教程，demo中storageNameClassName是缺失的，即，使用的是默认的StorageClass。</p>
+
+<blockquote>
+<p>If no StorageClass is specified, then the default StorageClass will be used</p>
+</blockquote>
+
+<p>至此，理解了k8s使用storageClass绑定pvc/pv的设计，也知道在statefulSet中如何使用，但，我们实验要简单，查阅资料storageClass大多是云厂商provisioner,可实验的是NFS和local，当然local更简单，但有个支持版本问题。
+&gt; FEATURE STATE: Kubernetes v1.14
+实验使用的是1.14.2集群，看下local-storageClass.yaml,<code>kubectl create -f local-storageClass.yaml</code>创建storageClass。</p>
+
+<pre><code class="language-yaml"># Only create this for K8s 1.9+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-class
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+# Supported policies: Delete, Retain
+reclaimPolicy: Delete
+</code></pre>
+
+<pre><code class="language-bash">root@hw1:~/zk# kubectl get storageclass
+NAME          PROVISIONER                    AGE
+local-class   kubernetes.io/no-provisioner   17h
+</code></pre>
+
+<p>接着，我们要创建属于local-class的PVs,为简单，使用本机文件作为存储，spec.storageClassName指定为上边创建的local-class，之后在statefulSet指定的PVC中指定该storageClass即可。这样操作简单，但为了方便管理以及生产，可以考虑NFS、甚至云服务商的PV。</p>
+
+<pre><code class="language-kubectl"></code></pre>
+
+<p>yaml
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: datadir1
+  labels:
+    type: local
+spec:
+  storageClassName: local-class
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:</p>
+
+<h2 id="path-mnt-data1">path: &ldquo;/mnt/data1&rdquo;</h2>
+
+<p>kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: datadir2
+  labels:
+    type: local
+spec:
+  storageClassName: local-class
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:</p>
+
+<h2 id="path-mnt-data2">path: &ldquo;/mnt/data2&rdquo;</h2>
+
+<p>kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: datadir3
+  labels:
+    type: local
+spec:
+  storageClassName: local-class
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: &ldquo;/mnt/data3&rdquo;</p>
+
+<pre><code>
+最后，我们要对官方的zk demo进行修改，将其spec.volumeClaimTemplates.storageClassName指定为lacal-class。
+
+</code></pre>
+
+<p>yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: zk-hs
+  labels:
+    app: zk
+spec:
+  ports:
+  - port: 2888
+    name: server
+  - port: 3888
+    name: leader-election
+  clusterIP: None
+  selector:</p>
+
+<h2 id="app-zk">app: zk</h2>
+
+<p>apiVersion: v1
+kind: Service
+metadata:
+  name: zk-cs
+  labels:
+    app: zk
+spec:
+  ports:
+  - port: 2181
+    name: client
+  selector:</p>
+
+<h2 id="app-zk-1">app: zk</h2>
+
+<p>apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: zk-pdb
+spec:
+  selector:
+    matchLabels:
+      app: zk</p>
+
+<h2 id="maxunavailable-1">maxUnavailable: 1</h2>
+
+<p>apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zk
+spec:
+  selector:
+    matchLabels:
+      app: zk
+  serviceName: zk-hs
+  replicas: 3
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: OrderedReady
+  template:
+    metadata:
+      labels:
+        app: zk
+    spec:
+      containers:
+      - name: kubernetes-zookeeper
+        imagePullPolicy: Always
+        #image: k8s.gcr.io/kubernetes-zookeeper:1.0-3.4.10
+        image: gcr.azk8s.cn/google_containers/kubernetes-zookeeper:1.0-3.4.10
+        resources:
+          requests:
+            memory: &ldquo;1Gi&rdquo;
+            cpu: &ldquo;0.2&rdquo;
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: server
+        - containerPort: 3888
+          name: leader-election
+        command:
+        - sh
+        - -c
+        - &ldquo;start-zookeeper <br />
+          &ndash;servers=3 <br />
+          &ndash;data_dir=/var/lib/zookeeper/data <br />
+          &ndash;data_log_dir=/var/lib/zookeeper/data/log <br />
+          &ndash;conf_dir=/opt/zookeeper/conf <br />
+          &ndash;client_port=2181 <br />
+          &ndash;election_port=3888 <br />
+          &ndash;server_port=2888 <br />
+          &ndash;tick_time=2000 <br />
+          &ndash;init_limit=10 <br />
+          &ndash;sync_limit=5 <br />
+          &ndash;heap=512M <br />
+          &ndash;max_client_cnxns=60 <br />
+          &ndash;snap_retain_count=3 <br />
+          &ndash;purge_interval=12 <br />
+          &ndash;max_session_timeout=40000 <br />
+          &ndash;min_session_timeout=4000 <br />
+          &ndash;log_level=INFO&rdquo;
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - &ldquo;zookeeper-ready 2181&rdquo;
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - &ldquo;zookeeper-ready 2181&rdquo;
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: datadir
+          mountPath: /var/lib/zookeeper
+      securityContext:
+        #runAsUser: 1000
+        fsGroup: 1000
+  volumeClaimTemplates:
+  - metadata:
+      name: datadir
+    spec:
+      accessModes: [ &ldquo;ReadWriteOnce&rdquo; ]
+      storageClassName: &ldquo;local-class&rdquo;
+      resources:
+        requests:
+          storage: 1Gi</p>
+
+<pre><code>
+
+</code></pre>
+
+<p>kubectl exec -it zk.yaml```启动ZKs。查看zk状态，并进行测试。</p>
+
+<pre><code class="language-bash">root@hw1:~/zk# kubectl get pods
+NAME                READY   STATUS    RESTARTS   AGE
+busybox             1/1     Running   19         19h
+zk-0                1/1     Running   0          17h
+zk-1                1/1     Running   0          17h
+zk-2                1/1     Running   0          17h
+
+root@hw1:~/zk# kubectl get pv
+NAME            CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                     STORAGECLASS   REASON   AGE
+Bound    default/datadir-kafka-2   local-class             17h
+datadir1        5Gi        RWO            Retain           Bound    default/datadir-zk-0      local-class             17h
+datadir2        5Gi        RWO            Retain           Bound    default/datadir-zk-1      local-class             17h
+datadir3        5Gi        RWO            Retain           Bound    default/datadir-zk-2      local-class             17h
+root@hw1:~/zk# kubectl get pvc
+NAME              STATUS   VOLUME          CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+datadir-zk-0      Bound    datadir1        5Gi        RWO            local-class    17h
+datadir-zk-1      Bound    datadir2        5Gi        RWO            local-class    17h
+datadir-zk-2      Bound    datadir3        5Gi        RWO            local-class    17h 
+</code></pre>
+
+<p>查看zk的状态</p>
+
+<pre><code class="language-bash">root@hw1:~/zk# for i in 0 1 2; do kubectl exec zk-$i -- hostname; done
+zk-0
+zk-1
+zk-2
+root@hw1:~/zk# for i in 0 1 2; do echo &quot;myid zk-$i&quot;;kubectl exec zk-$i -- cat /var/lib/zookeeper/data/myid; done
+myid zk-0
+1
+myid zk-1
+2
+myid zk-2
+3
+root@hw1:~/zk# for i in 0 1 2; do kubectl exec zk-$i -- hostname -f; done
+zk-0.zk-hs.default.svc.cluster.local
+zk-1.zk-hs.default.svc.cluster.local
+zk-2.zk-hs.default.svc.cluster.local
+root@hw1:~/zk# kubectl exec zk-0 -- cat /opt/zookeeper/conf/zoo.cfg
+#This file was autogenerated DO NOT EDIT
+clientPort=2181
+dataDir=/var/lib/zookeeper/data
+dataLogDir=/var/lib/zookeeper/data/log
+tickTime=2000
+initLimit=10
+syncLimit=5
+maxClientCnxns=60
+minSessionTimeout=4000
+maxSessionTimeout=40000
+autopurge.snapRetainCount=3
+autopurge.purgeInteval=12
+server.1=zk-0.zk-hs.default.svc.cluster.local:2888:3888
+server.2=zk-1.zk-hs.default.svc.cluster.local:2888:3888
+server.3=zk-2.zk-hs.default.svc.cluster.local:2888:3888
+root@hw1:~/zk# 
+
+</code></pre>
+
+<p>参考资料：
+1. <a href="https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/">StatefulSets</a>
+2. <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/#local">Storage Classes</a>
+3. <a href="https://kubernetes.io/docs/tutorials/stateful-application/zookeeper/">Running ZooKeeper, A Distributed System Coordinator</a></p>
+
+<hr />
+
+<p>由于篇幅关系，kafka部分分在下一篇记录。</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

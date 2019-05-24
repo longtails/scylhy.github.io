@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title> // My New Hugo Site</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.56.0-DEV" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="John Doe" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="https://scylhy.github.io/css/main.min.f90f5edd436ec7b74ad05479a05705770306911f721193e7845948fb07fe1335.css" />
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="Persistent Volumes introduce PersistentVolume子系统为用户和管理员提供一套将系统底层存储细节抽象的api，涉及两类API资源:PersistentVolume和PersistentVolumeClaim.
+PersistentVolume(pv)是由集群管理员提供的一种存储，它和node一样是一种集群资源。PVs是一种类似Volumes的存储插件，但是它具有独立于pod的生命周期。PV 的存储实现方式有NFS、iSCSI以及云提供商制定的存储系统。
+PersistentVolumeClaim(PVC)是一个存储请求，它类似于pod，pod消耗node资源，而pvc消耗pv资源；Pod能够请求指定级别的cpu和memory资源，pvc可以请求制定大小和获取模式(支持once read/write 和many times read only)的pv。
+用户一般会用PVC去申请不同规格的PV，这些不同规格的PV应该集群管理员，这样就为用户屏蔽了底层存储实现的细节，而对应的规格是由另一种资源SotrageClass定义的。
+在搭建kafaka/zookeeper集群时，stateful set需要动态绑定pv,一般动态绑定pv是需要云服务提供商的服务，本地需要另做处理。
+lifecycle of a lolume and claim Provisioning阶段：
+PVs由两种管理方式，static和dynamic。
+static：集群管理员会创建大量的PV,静态方式会将存储细节暴露给集群用户，方便用户通过集群api使用存储。其实，觉得这更适合k8s的学习、开发者用。
+dynamic: 当没有静态的PVs匹配用户的PVC时，集群就会尝试动态的为PVC提供一个数据卷。这种动态分配基于StorageClasses:PVC必须制定一个strage class,管理员必须创建PV时，必须配置storage class。在动态分配数据卷下，PVC通过storage class和数据卷联系。
+Binding:
+用户创建动态方式的PVC后，该PVC指定了所需的access mode。master上的控制循环会监视到新的PVC,如果有匹配的PV，就会绑定他们。一个PV如果被分配给一个PVC，控制循环将始终绑定该PV\PVC。一般用户会得到比他们申请规格大的数据卷。PV/PVC的绑定时排他的，这种绑定关系时一一映射的。
+Using:
+Pods使用claims获取存储,集群通过claims找到PVC/PV绑定，为pod挂在PV数据卷。数据卷支持多种访问模式，用户可以使用claims在pods上指定访问模式。
+Reclaiming
+当用户使用完他们的数据卷后，便可删除PVC对象，k8s API允许回收该数据卷。PersistentVolume的声明告诉集群在释放claim后应该怎么做。目前数据卷可以被Retained、Recycled和Deleted。
+Retain（保留）:
+Retain回收策略允许手动回收数据卷。当PVC被删除后，PV仍然存在，在pod看来，数据卷似乎被释放了，但该PV对于对于其他PVC仍是不可用的，因为之前使用者的数据还在数据卷里。管理员可以通过如下步骤手动回收该数据卷： 1. 删除PV,对于外部基础设施提供的相关存储在PV删除后，仍然存在。 2. 手动清理关联的存储上的数据。 3. 手动删除关联的存储，如果想重新使用该存储，可以创建一个指定该存储的PV。
+Delete:
+Delete回收策略会同时删除PV及对应的存储。动态配置的卷集成StorageClass的回收策略，其默认Delete，管理原应该为用户的期望来配置StorageClass，否则只能在卷创建后进行编辑和修补。
+Recycle:
+如果底层的存储卷插件支持，那Recycle回收策略会在该卷上执行基本的擦洗（rm -rf /thevolume/*)使其可被新的PVC使用。 然而，管理员也可以配置一个自定义的回收pod模版通过k8s控制管理命令擦洗卷。"/>
+
+    <meta property="og:title" content="" />
+<meta property="og:description" content="Persistent Volumes introduce PersistentVolume子系统为用户和管理员提供一套将系统底层存储细节抽象的api，涉及两类API资源:PersistentVolume和PersistentVolumeClaim.
+PersistentVolume(pv)是由集群管理员提供的一种存储，它和node一样是一种集群资源。PVs是一种类似Volumes的存储插件，但是它具有独立于pod的生命周期。PV 的存储实现方式有NFS、iSCSI以及云提供商制定的存储系统。
+PersistentVolumeClaim(PVC)是一个存储请求，它类似于pod，pod消耗node资源，而pvc消耗pv资源；Pod能够请求指定级别的cpu和memory资源，pvc可以请求制定大小和获取模式(支持once read/write 和many times read only)的pv。
+用户一般会用PVC去申请不同规格的PV，这些不同规格的PV应该集群管理员，这样就为用户屏蔽了底层存储实现的细节，而对应的规格是由另一种资源SotrageClass定义的。
+在搭建kafaka/zookeeper集群时，stateful set需要动态绑定pv,一般动态绑定pv是需要云服务提供商的服务，本地需要另做处理。
+lifecycle of a lolume and claim Provisioning阶段：
+PVs由两种管理方式，static和dynamic。
+static：集群管理员会创建大量的PV,静态方式会将存储细节暴露给集群用户，方便用户通过集群api使用存储。其实，觉得这更适合k8s的学习、开发者用。
+dynamic: 当没有静态的PVs匹配用户的PVC时，集群就会尝试动态的为PVC提供一个数据卷。这种动态分配基于StorageClasses:PVC必须制定一个strage class,管理员必须创建PV时，必须配置storage class。在动态分配数据卷下，PVC通过storage class和数据卷联系。
+Binding:
+用户创建动态方式的PVC后，该PVC指定了所需的access mode。master上的控制循环会监视到新的PVC,如果有匹配的PV，就会绑定他们。一个PV如果被分配给一个PVC，控制循环将始终绑定该PV\PVC。一般用户会得到比他们申请规格大的数据卷。PV/PVC的绑定时排他的，这种绑定关系时一一映射的。
+Using:
+Pods使用claims获取存储,集群通过claims找到PVC/PV绑定，为pod挂在PV数据卷。数据卷支持多种访问模式，用户可以使用claims在pods上指定访问模式。
+Reclaiming
+当用户使用完他们的数据卷后，便可删除PVC对象，k8s API允许回收该数据卷。PersistentVolume的声明告诉集群在释放claim后应该怎么做。目前数据卷可以被Retained、Recycled和Deleted。
+Retain（保留）:
+Retain回收策略允许手动回收数据卷。当PVC被删除后，PV仍然存在，在pod看来，数据卷似乎被释放了，但该PV对于对于其他PVC仍是不可用的，因为之前使用者的数据还在数据卷里。管理员可以通过如下步骤手动回收该数据卷： 1. 删除PV,对于外部基础设施提供的相关存储在PV删除后，仍然存在。 2. 手动清理关联的存储上的数据。 3. 手动删除关联的存储，如果想重新使用该存储，可以创建一个指定该存储的PV。
+Delete:
+Delete回收策略会同时删除PV及对应的存储。动态配置的卷集成StorageClass的回收策略，其默认Delete，管理原应该为用户的期望来配置StorageClass，否则只能在卷创建后进行编辑和修补。
+Recycle:
+如果底层的存储卷插件支持，那Recycle回收策略会在该卷上执行基本的擦洗（rm -rf /thevolume/*)使其可被新的PVC使用。 然而，管理员也可以配置一个自定义的回收pod模版通过k8s控制管理命令擦洗卷。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://scylhy.github.io/k8s/persistentvoumes/" />
+
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://scylhy.github.io"><img class="app-header-avatar" src="/avatar.jpg" alt="John Doe" /></a>
+      <h1>My New Hugo Site</h1>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vehicula turpis sit amet elit pretium.</p>
+      <div class="app-header-social">
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title"></h1>
+      <div class="post-meta">
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Jan 1, 0001
+        </div>
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          1 min read
+        </div></div>
+    </header>
+    <div class="post-content">
+      
+
+<h3 id="persistent-volumes">Persistent Volumes</h3>
+
+<h4 id="introduce">introduce</h4>
+
+<p>PersistentVolume子系统为用户和管理员提供一套将系统底层存储细节抽象的api，涉及两类API资源:PersistentVolume和PersistentVolumeClaim.</p>
+
+<p>PersistentVolume(pv)是由集群管理员提供的一种存储，它和node一样是一种集群资源。PVs是一种类似Volumes的存储插件，但是它具有独立于pod的生命周期。PV 的存储实现方式有NFS、iSCSI以及云提供商制定的存储系统。</p>
+
+<p>PersistentVolumeClaim(PVC)是一个存储请求，它类似于pod，pod消耗node资源，而pvc消耗pv资源；Pod能够请求指定级别的cpu和memory资源，pvc可以请求制定大小和获取模式(支持once read/write 和many times read only)的pv。</p>
+
+<p>用户一般会用PVC去申请不同规格的PV，这些不同规格的PV应该集群管理员，这样就为用户屏蔽了底层存储实现的细节，而对应的规格是由另一种资源SotrageClass定义的。</p>
+
+<p>在搭建kafaka/zookeeper集群时，stateful set需要动态绑定pv,一般动态绑定pv是需要云服务提供商的服务，本地需要另做处理。</p>
+
+<h4 id="lifecycle-of-a-lolume-and-claim">lifecycle of a lolume and claim</h4>
+
+<p><strong>Provisioning阶段</strong>：</p>
+
+<p>PVs由两种管理方式，static和dynamic。</p>
+
+<p>static：集群管理员会创建大量的PV,静态方式会将存储细节暴露给集群用户，方便用户通过集群api使用存储。其实，觉得这更适合k8s的学习、开发者用。</p>
+
+<p>dynamic: 当没有静态的PVs匹配用户的PVC时，集群就会尝试动态的为PVC提供一个数据卷。这种动态分配基于StorageClasses:PVC必须制定一个strage class,管理员必须创建PV时，必须配置storage class。在动态分配数据卷下，PVC通过storage class和数据卷联系。</p>
+
+<p><strong>Binding</strong>:</p>
+
+<p>用户创建动态方式的PVC后，该PVC指定了所需的access mode。master上的控制循环会监视到新的PVC,如果有匹配的PV，就会绑定他们。一个PV如果被分配给一个PVC，控制循环将始终绑定该PV\PVC。一般用户会得到比他们申请规格大的数据卷。PV/PVC的绑定时排他的，这种绑定关系时一一映射的。</p>
+
+<p><strong>Using</strong>:</p>
+
+<p>Pods使用claims获取存储,集群通过claims找到PVC/PV绑定，为pod挂在PV数据卷。数据卷支持多种访问模式，用户可以使用claims在pods上指定访问模式。</p>
+
+<p><strong>Reclaiming</strong></p>
+
+<p>当用户使用完他们的数据卷后，便可删除PVC对象，k8s API允许回收该数据卷。PersistentVolume的声明告诉集群在释放claim后应该怎么做。目前数据卷可以被Retained、Recycled和Deleted。</p>
+
+<p>Retain（保留）:</p>
+
+<p>Retain回收策略允许手动回收数据卷。当PVC被删除后，PV仍然存在，在pod看来，数据卷似乎被释放了，但该PV对于对于其他PVC仍是不可用的，因为之前使用者的数据还在数据卷里。管理员可以通过如下步骤手动回收该数据卷：
+1. 删除PV,对于外部基础设施提供的相关存储在PV删除后，仍然存在。
+2. 手动清理关联的存储上的数据。
+3. 手动删除关联的存储，如果想重新使用该存储，可以创建一个指定该存储的PV。</p>
+
+<p>Delete:</p>
+
+<p>Delete回收策略会同时删除PV及对应的存储。动态配置的卷集成StorageClass的回收策略，其默认Delete，管理原应该为用户的期望来配置StorageClass，否则只能在卷创建后进行编辑和修补。</p>
+
+<p>Recycle:</p>
+
+<p>如果底层的存储卷插件支持，那Recycle回收策略会在该卷上执行基本的擦洗（rm -rf /thevolume/*)使其可被新的PVC使用。
+然而，管理员也可以配置一个自定义的回收pod模版通过k8s控制管理命令擦洗卷。</p>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>

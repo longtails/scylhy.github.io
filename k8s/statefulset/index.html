@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <title> // My New Hugo Site</title>
+    <meta charset="utf-8" />
+    <meta name="generator" content="Hugo 0.56.0-DEV" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="John Doe" />
+    <meta name="description" content="" />
+    <link rel="stylesheet" href="https://scylhy.github.io/css/main.min.f90f5edd436ec7b74ad05479a05705770306911f721193e7845948fb07fe1335.css" />
+
+    
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content="Stateful Set 在k8s上部署有状态的应用是通过StatefulSets实现的。这里我们尝试部署官网的Stateful Set demo，为kfk/zk的部署做前期实验。
+像Deployment一样，StatefulSet也是基于容器特定的标识来管理Pod的，不一样的是StatefulSet会为每个pod保持一个标识。StatefulSet下创建的pod具有相同的配置，但每个pod都有一个持久的标志，正是该标志可以保证pod部署和scale的顺序。
+StatefulSets是用来解决有状态的应用的，比如： 1. 稳定的网络标识 2. 稳定的持久化存储 3. 有序部署、有序扩容 4. 有序收缩、有序删除
+StatefulSets的使用限制： 1. StatefulSet在1.9之前是beta资源，在1.5之前是不可用的 2. Pod的存储必须由PersistentVolume Provisioner根据请求的storage class配置，或者由管理员预先配置。 3. 删除或者收缩不会删除与其相关的数据卷，其目的是保证数据安全，一般是比自动清除数据要可靠些。 4. 为了Pods的网络表识，StatefulSets要求创建Headless Service。 5. StatefulSet被删除，其不保证中止pods,为了有序平滑的中止pods,应该收缩StatefulSet到0，最后删除StatefulSet。 6. 在使用默认Pod管理策略（orderedReady)进行滚动升级是，可能会进入异常状态，这需要手动干预修复。
+Components:
+StatefulSet配置需要如下几个组件： 1. Headless Service，用来控制网络域名。 2. spec要制定副本数，以启动对应数量的pods。 3. volumeClaimTemplates,使用供应商提供的PV来提供稳定存储。
+Pod Identity:
+StatefulSet中的每个pod拥有一个独特的表识，包含有序索引、稳定的网络表识，稳定存储。
+ordinal index：n个副本，索引则从0到n-1。 stable network id:pod的主机名为\$(statefulset name)-\$(ordinal),StatefulSet的域名为\$(service name).\$(namespace).svc.cluster.local。（cluster.local为集群域名），在pod创建后，会匹配一个DNS子域名：\$(podname).\$(service name)。
+Stable storage:
+k8s为每个VolumeClaimTemplate创建一个pv,pod会收到制定StorageClass和规格的pv,如果StorageClass没有指定，会使用默认的StorageClass。当pod被调度到node上，其volumeMounts会挂在pvc指定的pv。在StatefulSet/pod被删除后，其关联的pv不会自动删除，需要用户手动删除。
+Pod Name Label:
+StatefulSet控制器创建一个Pod，就会为其添加 statefulset.kubernetes.io/pod-name 标签，可以通过该标签在指定的pod上附着Service。
+创建有状态的应用：
+实践，在自己搭建的集群上，因为没有pv provisioner,所以我们需要使用本地的存储,在volumeClaimTemplates上使用自定义的storageClass,provisioner要设置为 kubernetes.io/no-provisioner;创建指定storageClass的pv;创建有状态的应用，通过storageClass使用对应的pv。
+storageClass:
+# Only create this for K8s 1."/>
+
+    <meta property="og:title" content="" />
+<meta property="og:description" content="Stateful Set 在k8s上部署有状态的应用是通过StatefulSets实现的。这里我们尝试部署官网的Stateful Set demo，为kfk/zk的部署做前期实验。
+像Deployment一样，StatefulSet也是基于容器特定的标识来管理Pod的，不一样的是StatefulSet会为每个pod保持一个标识。StatefulSet下创建的pod具有相同的配置，但每个pod都有一个持久的标志，正是该标志可以保证pod部署和scale的顺序。
+StatefulSets是用来解决有状态的应用的，比如： 1. 稳定的网络标识 2. 稳定的持久化存储 3. 有序部署、有序扩容 4. 有序收缩、有序删除
+StatefulSets的使用限制： 1. StatefulSet在1.9之前是beta资源，在1.5之前是不可用的 2. Pod的存储必须由PersistentVolume Provisioner根据请求的storage class配置，或者由管理员预先配置。 3. 删除或者收缩不会删除与其相关的数据卷，其目的是保证数据安全，一般是比自动清除数据要可靠些。 4. 为了Pods的网络表识，StatefulSets要求创建Headless Service。 5. StatefulSet被删除，其不保证中止pods,为了有序平滑的中止pods,应该收缩StatefulSet到0，最后删除StatefulSet。 6. 在使用默认Pod管理策略（orderedReady)进行滚动升级是，可能会进入异常状态，这需要手动干预修复。
+Components:
+StatefulSet配置需要如下几个组件： 1. Headless Service，用来控制网络域名。 2. spec要制定副本数，以启动对应数量的pods。 3. volumeClaimTemplates,使用供应商提供的PV来提供稳定存储。
+Pod Identity:
+StatefulSet中的每个pod拥有一个独特的表识，包含有序索引、稳定的网络表识，稳定存储。
+ordinal index：n个副本，索引则从0到n-1。 stable network id:pod的主机名为\$(statefulset name)-\$(ordinal),StatefulSet的域名为\$(service name).\$(namespace).svc.cluster.local。（cluster.local为集群域名），在pod创建后，会匹配一个DNS子域名：\$(podname).\$(service name)。
+Stable storage:
+k8s为每个VolumeClaimTemplate创建一个pv,pod会收到制定StorageClass和规格的pv,如果StorageClass没有指定，会使用默认的StorageClass。当pod被调度到node上，其volumeMounts会挂在pvc指定的pv。在StatefulSet/pod被删除后，其关联的pv不会自动删除，需要用户手动删除。
+Pod Name Label:
+StatefulSet控制器创建一个Pod，就会为其添加 statefulset.kubernetes.io/pod-name 标签，可以通过该标签在指定的pod上附着Service。
+创建有状态的应用：
+实践，在自己搭建的集群上，因为没有pv provisioner,所以我们需要使用本地的存储,在volumeClaimTemplates上使用自定义的storageClass,provisioner要设置为 kubernetes.io/no-provisioner;创建指定storageClass的pv;创建有状态的应用，通过storageClass使用对应的pv。
+storageClass:
+# Only create this for K8s 1." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://scylhy.github.io/k8s/statefulset/" />
+
+
+
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="https://scylhy.github.io"><img class="app-header-avatar" src="/avatar.jpg" alt="John Doe" /></a>
+      <h1>My New Hugo Site</h1>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vehicula turpis sit amet elit pretium.</p>
+      <div class="app-header-social">
+        
+      </div>
+    </header>
+    <main class="app-container">
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class ="post-title"></h1>
+      <div class="post-meta">
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-calendar">
+  <title>calendar</title>
+  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+</svg>
+          Jan 1, 0001
+        </div>
+        <div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-clock">
+  <title>clock</title>
+  <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+          3 min read
+        </div></div>
+    </header>
+    <div class="post-content">
+      
+
+<h3 id="stateful-set">Stateful Set</h3>
+
+<p>在k8s上部署有状态的应用是通过StatefulSets实现的。这里我们尝试部署官网的Stateful Set demo，为kfk/zk的部署做前期实验。</p>
+
+<p>像Deployment一样，StatefulSet也是基于容器特定的标识来管理Pod的，不一样的是StatefulSet会为每个pod保持一个标识。StatefulSet下创建的pod具有相同的配置，但每个pod都有一个持久的标志，正是该标志可以保证pod部署和scale的顺序。</p>
+
+<p>StatefulSets是用来解决有状态的应用的，比如：
+1. 稳定的网络标识
+2. 稳定的持久化存储
+3. 有序部署、有序扩容
+4. 有序收缩、有序删除</p>
+
+<p>StatefulSets的使用限制：
+1. StatefulSet在1.9之前是beta资源，在1.5之前是不可用的
+2. Pod的存储必须由PersistentVolume Provisioner根据请求的storage class配置，或者由管理员预先配置。
+3. 删除或者收缩不会删除与其相关的数据卷，其目的是保证数据安全，一般是比自动清除数据要可靠些。
+4. 为了Pods的网络表识，StatefulSets要求创建Headless Service。
+5. StatefulSet被删除，其不保证中止pods,为了有序平滑的中止pods,应该收缩StatefulSet到0，最后删除StatefulSet。
+6. 在使用默认Pod管理策略（orderedReady)进行滚动升级是，可能会进入异常状态，这需要手动干预修复。</p>
+
+<p>Components:</p>
+
+<p>StatefulSet配置需要如下几个组件：
+1. Headless Service，用来控制网络域名。
+2. spec要制定副本数，以启动对应数量的pods。
+3. volumeClaimTemplates,使用供应商提供的PV来提供稳定存储。</p>
+
+<p>Pod Identity:</p>
+
+<p>StatefulSet中的每个pod拥有一个独特的表识，包含有序索引、稳定的网络表识，稳定存储。</p>
+
+<p>ordinal index：n个副本，索引则从0到n-1。
+stable network id:pod的主机名为\$(statefulset name)-\$(ordinal),StatefulSet的域名为\$(service name).\$(namespace).svc.cluster.local。（cluster.local为集群域名），在pod创建后，会匹配一个DNS子域名：\$(podname).\$(service name)。</p>
+
+<p>Stable storage:</p>
+
+<p>k8s为每个VolumeClaimTemplate创建一个pv,pod会收到制定StorageClass和规格的pv,如果StorageClass没有指定，会使用默认的StorageClass。当pod被调度到node上，其volumeMounts会挂在pvc指定的pv。在StatefulSet/pod被删除后，其关联的pv不会自动删除，需要用户手动删除。</p>
+
+<p>Pod Name Label:</p>
+
+<p>StatefulSet控制器创建一个Pod，就会为其添加 statefulset.kubernetes.io/pod-name 标签，可以通过该标签在指定的pod上附着Service。</p>
+
+<p><strong>创建有状态的应用：</strong></p>
+
+<p>实践，在自己搭建的集群上，因为没有pv provisioner,所以我们需要使用本地的存储,在volumeClaimTemplates上使用自定义的storageClass,provisioner要设置为 kubernetes.io/no-provisioner;创建指定storageClass的pv;创建有状态的应用，通过storageClass使用对应的pv。</p>
+
+<p>storageClass:</p>
+
+<pre><code class="language-yaml"># Only create this for K8s 1.9+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-class
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+# Supported policies: Delete, Retain
+reclaimPolicy: Delete
+</code></pre>
+
+<p>pv:</p>
+
+<pre><code class="language-yaml">kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: datadir1
+  labels:
+    type: local
+spec:
+  storageClassName: local-class
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: &quot;/mnt/data1&quot;
+
+---
+
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: datadir2
+  labels:
+    type: local
+spec:
+  storageClassName: local-class
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: &quot;/mnt/data2&quot;
+
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: datadir3
+  labels:
+    type: local
+spec:
+  storageClassName: local-class
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: &quot;/mnt/data3&quot;
+</code></pre>
+
+<p>nginx web，一个有状态的应用：</p>
+
+<pre><code class="language-yaml">apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 80
+    name: web
+  clusterIP: None
+  selector:
+    app: nginx
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx # has to match .spec.template.metadata.labels
+  serviceName: &quot;nginx&quot;
+  replicas: 3 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: nginx # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: nginx
+        image: k8s.gcr.io/nginx-slim:0.8
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ &quot;ReadWriteOnce&quot; ]
+      storageClassName: &quot;local-class&quot;
+      resources:
+        requests:
+          storage: 1Gi
+
+</code></pre>
+
+<p>测试:</p>
+
+<pre><code class="language-bash">root@hw1:~/k8s/stateful# kubectl get pods
+NAME           READY   STATUS    RESTARTS   AGE
+busybox        1/1     Running   181        7d13h
+busybox-curl   1/1     Running   45         45h
+web-0          1/1     Running   0          45h
+web-1          1/1     Running   0          45h
+web-2          1/1     Running   0          45h
+root@hw1:~/k8s/stateful# kubectl get statefulset
+NAME   READY   AGE
+web    3/3     45h
+root@hw1:~/k8s/stateful# kubectl get pvc
+NAME        STATUS   VOLUME     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+www-web-0   Bound    datadir    5Gi        RWO            local-class    45h
+www-web-1   Bound    datadir1   5Gi        RWO            local-class    45h
+www-web-2   Bound    datadir2   5Gi        RWO            local-class    45h
+root@hw1:~/k8s/stateful# kubectl get pv
+NAME       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS      CLAIM               STORAGECLASS   REASON   AGE
+datadir    5Gi        RWO            Retain           Bound       default/www-web-0   local-class             45h
+datadir1   5Gi        RWO            Retain           Bound       default/www-web-1   local-class             45h
+datadir2   5Gi        RWO            Retain           Bound       default/www-web-2   local-class             45h
+datadir3   5Gi        RWO            Retain           Available                       local-class             45h
+
+
+root@hw1:~/k8s/stateful# kubectl exec -it busybox-curl -- nslookup nginx
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      nginx
+Address 1: 10.244.0.23 web-0.nginx.default.svc.cluster.local
+Address 2: 10.244.0.25 web-2.nginx.default.svc.cluster.local
+Address 3: 10.244.0.24 web-1.nginx.default.svc.cluster.local
+root@hw1:~/k8s/stateful# kubectl exec -it busybox-curl -- nslookup web-0.nginx
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      web-0.nginx
+Address 1: 10.244.0.23 web-0.nginx.default.svc.cluster.local
+
+</code></pre>
+
+    </div>
+    <div class="post-footer">
+      
+    </div>
+  </article>
+
+    </main>
+  </body>
+</html>
