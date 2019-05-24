@@ -6,10 +6,19 @@
     <description>Recent content on My New Hugo Site</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 24 May 2019 20:48:00 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 24 May 2019 21:07:40 +0800</lastBuildDate>
     
 	<atom:link href="https://scylhy.github.io/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Secod</title>
+      <link>https://scylhy.github.io/secod/</link>
+      <pubDate>Fri, 24 May 2019 21:07:40 +0800</pubDate>
+      
+      <guid>https://scylhy.github.io/secod/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Test</title>
